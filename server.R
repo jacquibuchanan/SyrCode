@@ -4,7 +4,7 @@ library(plyr)  # required for round_any function
 
 # Read in CSV file
 
-setwd( "C:/Users/Ben/Dropbox/.Maxwell Files/Data Driven Management II/")
+# setwd( "C:/Users/Ben/Dropbox/.Maxwell Files/Data Driven Management II/")
 
 dat <- read.csv("SyracuseCodeViolations.csv")
 
