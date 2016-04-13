@@ -54,17 +54,16 @@ violation.types <- c("Property Maintenance-Int",
 
 
 shinyUI(fluidPage(
+  
   titlePanel('City of Syracuse - Code Violations'),
   
   sidebarLayout(
     sidebarPanel(
       checkboxGroupInput("show_comps", 
                           label = h3("Complaint types:"), 
-                          choices = violation.types)
-    ),
-    
-    mainPanel = (tabsetPanel(id='dataset',
-                             tabPanel("Complaints", plotOutput("complaints"))
+                          choices = violation.types))
+    ,
+    mainPanel(plotOutput("complaints"))
     )
-    ))
-))
+    )
+)

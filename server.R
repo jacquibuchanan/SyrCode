@@ -72,8 +72,6 @@ shinyServer(function(input,output){
     
     dat.sub <- dat[ dat$Complaint.Type %in% input$show_comps , ]
     
-
-    
     # Create chart for a subset of data
     
     complaint.sub <- tapply( dat.sub$Complaint.Type, dat.sub$month.year, length )
@@ -102,27 +100,5 @@ shinyServer(function(input,output){
     
     text( 1:length(complaint.sub), complaint.sub, month.labels, pos=3, cex=0.7 )
     
-    
-    ##############
-    
-    # Create a matrix of the two inputs and their counts
-#    counts <- NULL
-    
-    # Create the selector vector - returns a TRUE value only when both columns are in the respective vectors of checkbox choices
-#    these.complaints <- (dat$Complaint.Type %in% input$show_comps)
-    
-    # Create a subset of the full data based on the selector vector
-#    dat.subset <- dat[these.complaints, ]
-    
-    # Create a table (matrix) of the two values and the counts 
-#    counts <- table(dat.subset$Complaint.Type, month.year)
-    
-    # Chart the bar plot and the legend based on the counts matrix
-#    plot(counts, 
-#         main="Complaints",
-#         ylab="Number of Complaints",
-#         bty="n"
-#        )
-#    legend("topright",fill=agencies.colors, legend=rownames(counts), title="Complaints")
   })
 })
