@@ -1,3 +1,4 @@
+
 library( RCurl )
 library( shiny )
 library( plyr )
@@ -73,18 +74,18 @@ ui <- fluidPage(
                                label = h3("Complaint types:"), 
                                choices = complaint.types),
             title="Complaints Over Time", 
-            width=2 ),
+            width=3 ),
     column( plotOutput( "complaints" ),
-            width=8 )),
+            width=9 )),
   
   fluidRow(
     column( checkboxGroupInput("show_vios",
                                label= h3("Violation types:"),
                                choices= violation.types),
             title="Violations Over Time",
-            width=2 ),
+            width=3 ),
     column( plotOutput( "violations" ),
-            width=8 ))
+            width=9 ))
   )
   
 
@@ -94,7 +95,7 @@ server <- function(input,output){
   
   output$complaints <- renderPlot({
     
-    dat.sub <- dat[ dat$Complaint.Type %in% input$show_vios , ]
+    dat.sub <- dat[ dat$Complaint.Type %in% input$show_comps , ]
     
     # Create chart for a subset of data
     complaint.sub <- tapply( dat.sub$Complaint.Type, dat.sub$month.year, length )
