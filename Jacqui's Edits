@@ -1,15 +1,17 @@
 
+# Funtimes with dygraphs
+
 library( RCurl )
 library( shiny )
 library( plyr )
-
+library( dygraphs )
 
 dat <- read.csv("Syracuse_Code_Violations.csv")
 
 # Drop dates before 2012
 complaint.date <- as.Date( dat$Violation.Date, "%m/%d/%Y" )
-gt.2012 <- complaint.date > "2011-12-31"
-dat <- dat[ gt.2012 , ]
+pre.2012 <- complaint.date > "2011-12-31"
+dat <- dat[ pre.2012 , ]
 
 complaint.date <- as.Date( dat$Violation.Date, "%m/%d/%Y" )
 
@@ -52,17 +54,17 @@ m.y.name <- format( vio.date, "%b-%Y" )
 # table( dat$Complaint.Type, month.year )
 dat.v$m.year <- m.year
 
-violation.types <- c("254: Interior surfaces",
-                     "185: Overgrowth",
-                     "184: Trash & Debris",
+violation.types <- c("Section 305.3 - Interior surfaces",
+                     "Section 27-72 (f) - Overgrowth",
+                     "Section 27-72 (e) -Trash & Debris",
                      "325: General",
-                     "271: Infestation",
-                     "152: Protective coating for wood surfaces",
+                     "Section 308.1 - Infestation",
+                     "Section 27-32 (d) Protective coating for wood surfaces",
                      "252: General",
-                     "150: Structural members",
-                     "234: Window, skylight, and door frames",
-                     "151: Stairs, porches, and railings"
-                     )
+                     "Section 27-31 (c) Structural members",
+                     "Section 304.13 - Window, skylight and door frames",
+                     "Section 27-32 (b) Stairs, porches and railings"
+)
 
 #########################################################UI##########################################################
 
@@ -70,12 +72,15 @@ violation.types <- c("254: Interior surfaces",
 ui <- fluidPage(
   
   fluidRow(
+    titlePanel( "  Syracuse Code Violation Trends, 2012-2016" ),
     column( checkboxGroupInput("show_comps", 
                                label = h3("Complaint types:"), 
-                               choices = complaint.types),
-            title="Complaints Over Time", 
-            width=3 ),
-    column( plotOutput( "complaints" ),
+                               selected = "Bed Bugs",
+                               choices = complaint.types
+    ),
+    title="Complaints Over Time", 
+    width=3 ),
+    column( dygraphOutput( "complaints" ),
             width=9 )),
   
   fluidRow(
@@ -84,18 +89,30 @@ ui <- fluidPage(
                                choices= violation.types),
             title="Violations Over Time",
             width=3 ),
-    column( plotOutput( "violations" ),
+    column( dygraphOutput( "violations" ),
             width=9 ))
-  )
-  
+)
+
 
 ######################################################SERVER#########################################################
 
 server <- function(input,output){
   
-  output$complaints <- renderPlot({
+  # COMPLAINTS PLOT
+  
+  output$complaints <- renderDygraph({
     
     dat.sub <- dat[ dat$Complaint.Type %in% input$show_comps , ]
+    
+    # Dropping months with zero complaints
+    ncomps <- 0
+    comp.checks <- as.data.frame(input$show_comps)
+    ncomps <- length(input$comp.checks)
+    
+    # If there is no input, then set it to 1
+    # if(ncomps == 0) { 
+    #  ncomps = 1
+    # }
     
     # Create chart for a subset of data
     complaint.sub <- tapply( dat.sub$Complaint.Type, dat.sub$month.year, length )
@@ -105,49 +122,61 @@ server <- function(input,output){
     complaint.sub.df <- as.data.frame(complaint.sub)
     max.ylim <- round_any((1.1*max(complaint.sub.df[ , 1 ] )), 10, f = ceiling)
     
+    # If there is no max y limit, then set it to 1
+    if(max.ylim == 0) { 
+      max.ylim = 1
+    }
+    
     # Set pretty names
     pretty.names <- format( as.Date(names(complaint.sub)), "%b-%Y" )
     month.labels <- format( as.Date(names(complaint.sub)), "%b" )
     
-    # Plot
-    plot( complaint.sub, type="b", pch=19, xaxt="n", bty="n", col="steelblue", 
-          ylab = "Number of Complaints",
-          xlab = "Time",
-          ylim = c(0, max.ylim)
-    )
-    axis( side=1, at=(1:length(complaint.sub))[c(T,F,F)], labels=pretty.names[c(T,F,F)], cex.axis=0.8, las=2 )
-    text( 1:length(complaint.sub), complaint.sub, month.labels, pos=3, cex=0.7 )
+    # If month has no complaints, then that month's label is null
+    month.labels[ complaint.sub == 0 ] <- ""
+    
+    #xrange <- 0
+    #yrange <- c(0:1) 
+    
+    # Plot Complaints
+    dygraph(complaint.sub) %>% 
+      dyRangeSelector()
     
   })
   
-  output$violations <- renderPlot({
+  
+  # VIOLATIONS PLOT 
+  
+  output$violations <- renderDygraph({
     
     vdat.sub <- dat.v[ dat.v$Code %in% input$show_vios , ]
     
-    # Create chart for a subset of data
+    nvios <- 0
+    vio.checks <- as.data.frame(input$show_vios)
+    nvios <- length(input$vio.checks)
     
+    # Create chart for a subset of data
     violation.sub <- tapply( vdat.sub$Code, vdat.sub$m.year, length )
     violation.sub[ is.na(violation.sub) ] <- 0
     
     # Set maximum y limit
-    
     violation.sub.df <- as.data.frame(violation.sub)
     max.ylim <- round_any((1.1*max(violation.sub.df[ , 1 ] )), 10, f = ceiling)
     
-    # Set pretty names
+    # If there is no max y limit, then set it to 1
+    if(max.ylim == 0) { 
+      max.ylim = 1
+    }
     
+    # Set pretty names
     vpretty.names <- format( as.Date(names(violation.sub)), "%b-%Y" )
     vmonth.labels <- format( as.Date(names(violation.sub)), "%b" )
     
-    plot( violation.sub, type="b", pch=19, xaxt="n", bty="n", col="goldenrod", 
-          ylab = "Number of Violations",
-          xlab = "Time",
-          ylim = c(0, max.ylim)
-    )
+    # If month has no violations, then that month's label is null
+    vmonth.labels[ violation.sub == 0 ] <- ""
     
-    axis( side=1, at=(1:length(violation.sub))[c(T,F,F)], labels=vpretty.names[c(T,F,F)], cex.axis=0.8, las=2 )
-    
-    text( 1:length(violation.sub), violation.sub, vmonth.labels, pos=3, cex=0.7 )
+    # Plot Violations
+    dygraph(violation.sub) %>% 
+      dyRangeSelector()
     
   })
 }
